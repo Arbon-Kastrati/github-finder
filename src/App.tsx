@@ -1,5 +1,10 @@
+import UserSearch from './components/UserSearch';
 const App = () => {
-    return <></>;
+    return (
+        <main>
+            <UserSearch />
+        </main>
+    );
 };
 
 export default App;
