@@ -15,7 +15,7 @@ const RecentSearches = ({
                 {searches.map((user) => (
                     <li
                         key={user}
-                        className="flex items-center justify-center gap-2 cursor-pointer p-3 bg-gray-200 rounded-lg my-2"
+                        className="flex items-center justify-left gap-2 cursor-pointer pl-10 p-3 bg-gray-200 rounded-lg my-2 hover:bg-gray-300"
                         onClick={() => searchedUserClicked(user)}
                     >
                         <FaUser />
