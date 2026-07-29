@@ -15,8 +15,7 @@ export default defineConfig(({ mode }) => {
                     changeOrigin: true,
                     rewrite: (path) => path.replace(/^\/api\/github/, ''),
                     headers: {
-                        Authentication: `Bearer ${env.VITE_GITHUB_API_TOKEN}`,
-                        Accept: 'application/vnd.github+json',
+                        Authorization: `Bearer ${env.VITE_GITHUB_API_TOKEN}`,
                     },
                 },
             },
