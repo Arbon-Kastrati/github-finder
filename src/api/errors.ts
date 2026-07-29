@@ -25,3 +25,17 @@ export class GithubApiError extends Error {
         this.fieldErrors = fieldErrors;
     }
 }
+
+export function parseApiError(error: Error | null) {
+    if (!error) return null;
+    const isCustom = error instanceof GithubApiError;
+
+    const parsedErr = {
+        isValidation: isCustom && error.type === 'VALIDATION',
+        isGeneric: isCustom && error.type !== 'VALIDATION',
+        isUnexpected: error && !isCustom,
+        message: error?.message,
+    };
+
+    if (isCustom) return { ...parsedErr, ...error };
+}
