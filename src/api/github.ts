@@ -1,15 +1,87 @@
+import type { SuggestedUser } from '../types';
 import { GithubApiError } from './errors';
 
-const findGithubUser = async (user: string) => {
-    const res = await fetch('/api/github/users/' + user).catch(
-        (error: unknown) => {
+const findGithubUser = async (username: string) => {
+    const res = await fetch('/api/github/users/' + username, {
+        headers: {
+            Accept: 'application/vnd.github+json',
+        },
+    }).catch((error: Error) => {
+        throw handleNetworkError(error);
+    });
+    const data = await handleResponse(res, username);
+    console.log(data);
+    return data;
+};
+
+const findGithubSuggestions = async (
+    username: string,
+): Promise<SuggestedUser[]> => {
+    const res = await fetch('/api/github/search/users?q=' + username, {
+        headers: {
+            Accept: 'application/vnd.github+json',
+        },
+    }).catch((error) => {
+        throw handleNetworkError(error);
+    });
+    const data = await handleResponse(res, username);
+    console.log(data.items);
+    return data.items.slice(0, 10);
+};
+
+const checkIfFollowingUser = async (username: string) => {
+    const res = await fetch('/api/github/user/following/' + username).catch(
+        (error) => {
             throw handleNetworkError(error);
         },
     );
-    return await handleResponse(res, user);
+
+    try {
+        const data = await handleResponse(res, username);
+        if (data) return true;
+    } catch (error) {
+        if (error instanceof GithubApiError && error.statusCode === 404) {
+            return false;
+        } else {
+            throw error;
+        }
+    }
+};
+
+const followGithubUser = async (username: string) => {
+    const res = await fetch('/api/github/user/following/' + username, {
+        method: 'PUT',
+    }).catch((error) => {
+        throw handleNetworkError(error);
+    });
+
+    try {
+        const data = await handleResponse(res, username);
+        if (data) return true;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const unfollowGithubUser = async (username: string) => {
+    const res = await fetch('/api/github/user/following/' + username, {
+        method: 'DELETE',
+    }).catch((error) => {
+        throw handleNetworkError(error);
+    });
+
+    try {
+        const data = await handleResponse(res, username);
+        if (data) return true;
+    } catch (error) {
+        throw error;
+    }
 };
 
 const handleResponse = async (response: Response, username: string) => {
+    if (response.status === 204) {
+        return { items: [] };
+    }
     const contentType: string | null = response.headers.get('content-type');
     if (!contentType || !contentType!.includes('application/json')) {
         const error = new GithubApiError(
@@ -56,7 +128,8 @@ const handleResponse = async (response: Response, username: string) => {
                 default:
                     throw new GithubApiError(
                         'CLIENT',
-                        `Something went wrong in the client side`,
+                        payload.message ||
+                            `Something went wrong in the client side`,
                         response.status,
                     );
             }
@@ -75,11 +148,10 @@ const handleResponse = async (response: Response, username: string) => {
         }
     }
 
-    console.log(payload);
     return payload;
 };
 
-const handleNetworkError = (error: unknown): GithubApiError => {
+const handleNetworkError = (error: Error): GithubApiError => {
     console.error(error);
     return new GithubApiError(
         'NETWORK',
@@ -87,4 +159,10 @@ const handleNetworkError = (error: unknown): GithubApiError => {
     );
 };
 
-export { findGithubUser };
+export {
+    findGithubUser,
+    findGithubSuggestions,
+    checkIfFollowingUser,
+    followGithubUser,
+    unfollowGithubUser,
+};
